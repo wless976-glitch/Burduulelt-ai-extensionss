@@ -1,0 +1,9 @@
+node_modules/
+worker/node_modules/
+worker/.wrangler/
+worker/package-lock.json
+package-lock.json
+coverage/
+extension/fonts/
+extension/images/
+extension/icons/

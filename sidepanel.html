@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Миний мэдээлэл AI</title>
+<style>
+  :root {
+    --bg:#0a1020; --card:#111a2e; --card2:#0d1527; --line:#223049; --text:#e9eef9; --muted:#93a3bd;
+    --brand:#4f8cff; --brand2:#2eb87a;
+    --ok:#3ecf8e; --ok-bg:rgba(62,207,142,.10); --ok-line:rgba(62,207,142,.35);
+    --warn:#f5b84a; --warn-bg:rgba(245,184,74,.10); --warn-line:rgba(245,184,74,.40);
+    --err:#ff6b6b; --err-bg:rgba(255,107,107,.11); --err-line:rgba(255,107,107,.40);
+    --info:#6aa2ff; --info-bg:rgba(79,140,255,.10); --info-line:rgba(79,140,255,.40);
+    --r:14px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:14px; background:var(--bg); color:var(--text); font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  :focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+
+  /* Header */
+  .top { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .logo { width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#4f8cff,#2eb87a); display:grid; place-items:center; font-size:18px; flex:none; }
+  h1 { font-size:17px; margin:0; line-height:1.2; }
+  .sub { color:var(--muted); font-size:13px; margin:2px 0 12px; }
+
+  /* Tabs (segmented) */
+  .tabs { display:flex; gap:4px; padding:4px; margin-bottom:12px; background:var(--card2); border:1px solid var(--line); border-radius:12px; }
+  .tabs button { flex:1; background:transparent; color:var(--muted); border:0; border-radius:9px; padding:8px 6px; font-size:13px; }
+  .tabs button.active { background:var(--card); color:var(--text); font-weight:600; box-shadow:0 0 0 1px var(--line); }
+
+  /* Cards, buttons */
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px; margin-bottom:12px; }
+  .step { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; font-weight:600; }
+  button { background:var(--brand); color:#fff; border:0; border-radius:10px; padding:9px 14px; font:inherit; cursor:pointer; }
+  button:hover:not(:disabled) { filter:brightness(1.1); }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--text); }
+  button:disabled { opacity:.5; cursor:default; }
+  button.primary { width:100%; padding:12px; font-size:15px; font-weight:600; background:linear-gradient(135deg,#3f7cf0,#2eb87a); }
+  button.mini { font-size:12px; padding:4px 10px; margin-left:4px; border-radius:8px; }
+  .small { font-size:13px; }
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)} .muted{color:var(--muted)}
+  .hidden { display:none !important; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+
+  /* Data source chips (step 1 result) */
+  .srcChips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .chip { font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--card2); white-space:nowrap; }
+  .chip.ok { color:var(--ok); border-color:var(--ok-line); background:var(--ok-bg); }
+  .chip.err { color:var(--err); border-color:var(--err-line); background:var(--err-bg); }
+  .chip.dim { color:var(--muted); }
+
+  /* AI summary */
+  .headline { font-size:16px; font-weight:700; line-height:1.35; margin-bottom:10px; }
+  .counts { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .pill { font-size:12px; font-weight:600; padding:4px 11px; border-radius:999px; border:1px solid; }
+  .pill.urgent { color:var(--err); background:var(--err-bg); border-color:var(--err-line); }
+  .pill.warning { color:var(--warn); background:var(--warn-bg); border-color:var(--warn-line); }
+  .pill.info { color:var(--info); background:var(--info-bg); border-color:var(--info-line); }
+  .pill.ok { color:var(--ok); background:var(--ok-bg); border-color:var(--ok-line); }
+
+  .alert { position:relative; padding:12px 12px 12px 48px; margin:8px 0; border-radius:12px; border:1px solid var(--line); background:var(--card2); }
+  .alert::before { content:"!"; position:absolute; left:12px; top:12px; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:14px; color:#0a1020; background:var(--muted); }
+  .alert b { display:block; margin-bottom:2px; }
+  .alert .detail { color:#c9d4e8; font-size:13px; }
+  .alert .action { display:inline-block; margin-top:8px; font-size:12px; font-weight:600; padding:4px 10px; border-radius:8px; border:1px solid currentColor; }
+  .alert.urgent { background:var(--err-bg); border-color:var(--err-line); }
+  .alert.urgent::before { background:var(--err); } .alert.urgent .action { color:var(--err); }
+  .alert.warning { background:var(--warn-bg); border-color:var(--warn-line); }
+  .alert.warning::before { background:var(--warn); } .alert.warning .action { color:var(--warn); }
+  .alert.info { background:var(--info-bg); border-color:var(--info-line); }
+  .alert.info::before { content:"i"; background:var(--info); } .alert.info .action { color:var(--info); }
+
+  .changes { margin-top:12px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--card2); }
+  .changes .row { font-size:13px; margin-top:4px; }
+
+  details.okbox { margin-top:10px; border:1px solid var(--ok-line); background:var(--ok-bg); border-radius:12px; padding:10px 12px; }
+  details.okbox summary { color:var(--ok); font-weight:600; font-size:14px; }
+  details.okbox .item { font-size:13px; margin-top:6px; color:#c9f3e0; }
+  details summary { cursor:pointer; color:var(--muted); font-size:13px; }
+  details#detailsBox { margin:4px 2px 12px; }
+
+  /* Chat */
+  #messages { display:flex; flex-direction:column; gap:8px; max-height:520px; overflow-y:auto; margin-bottom:10px; }
+  .msg { padding:9px 12px; border-radius:14px; max-width:92%; white-space:pre-wrap; }
+  .msg.user { align-self:flex-end; background:var(--brand); color:#fff; border-bottom-right-radius:4px; }
+  .msg.ai { align-self:flex-start; background:var(--card2); border:1px solid var(--line); border-bottom-left-radius:4px; }
+  .msg.ai a { color:#8fb6ff; display:block; margin-top:4px; font-size:13px; }
+  .msg.wide { max-width:100%; white-space:normal; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .chips button { font-size:12px; padding:6px 10px; text-align:left; border-radius:999px; }
+  .ask { display:flex; gap:8px; }
+  .ask input { flex:1; min-width:0; background:var(--card2); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:9px 10px; font:inherit; }
+
+  /* Document plan (chat + list tab) */
+  .plan .doc { font-size:13px; margin:6px 0; display:block; cursor:pointer; }
+  .plan .doc input { margin:0 6px 0 0; vertical-align:middle; }
+  .plan .row { display:flex; flex-wrap:wrap; gap:6px; }
+  .plan .bundle { margin-top:10px; padding:10px; border:1px solid var(--ok-line); border-radius:10px; background:var(--ok-bg); }
+  .plan .choose { margin:4px 0 8px 20px; display:flex; flex-direction:column; gap:4px; }
+  .plan .choose button { text-align:left; font-size:12px; padding:6px 9px; }
+  .plan select { background:var(--card2); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:2px 4px; font:inherit; }
+  .plan .choose input { background:transparent; color:inherit; border:0; border-bottom:1px dashed var(--line); font:inherit; font-size:13px; padding:3px 0; }
+
+  textarea { width:100%; min-height:110px; background:var(--card2); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:9px; font:inherit; resize:vertical; margin:8px 0; }
+  pre { white-space:pre-wrap; word-break:break-word; font-size:12px; background:var(--card2); padding:8px; border-radius:8px; max-height:240px; overflow:auto; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="logo" aria-hidden="true">🛡️</div>
+    <h1>Миний мэдээлэл AI</h1>
+  </div>
+  <div class="sub">e-Mongolia-д ДАН-аар өөрөө нэвтэрнэ. Нууц үг extension-д орохгүй.</div>
+
+  <div class="tabs">
+    <button data-tab="info">Миний мэдээлэл</button>
+    <button data-tab="list">Жагсаалтаар бүрдүүлэх</button>
+  </div>
+
+  <div id="tab-info">
+    <div class="card">
+      <button id="analyze" class="primary">Шинжлэх</button>
+      <div id="status" class="small muted" style="margin-top:8px"></div>
+      <div class="actions">
+        <button id="openEm" class="ghost small hidden">e-Mongolia нээх</button>
+        <button id="reset" class="ghost small hidden">↺ Дахин эхлүүлэх</button>
+      </div>
+    </div>
+
+    <div id="srcChips" class="srcChips hidden"></div>
+
+    <div id="summaryCard" class="card hidden">
+      <div class="step">AI хураангуй</div>
+      <div id="summary"></div>
+    </div>
+
+    <div id="chatCard" class="card hidden">
+      <div class="step">Асуулт асуух</div>
+      <div id="messages"></div>
+      <div id="chips" class="chips"></div>
+      <form id="askForm" class="ask">
+        <input id="question" placeholder="Жишээ нь: Миний НДШ хэдэн сар төлөгдсөн бэ?" maxlength="500" autocomplete="off">
+        <button id="send">Илгээх</button>
+      </form>
+    </div>
+
+    <details id="detailsBox" class="hidden">
+      <summary>Дэлгэрэнгүй: татсан мэдээлэл, AI руу илгээсэн зүйл</summary>
+      <div id="sources" class="small" style="margin-top:6px"></div>
+      <pre id="preview"></pre>
+    </details>
+  </div>
+
+  <div id="tab-list" class="hidden">
+    <div class="card">
+      <div class="step">Бүрдүүлэх жагсаалт</div>
+      <div class="small muted">Банк, сургууль, ажил олгогч, элчин сайдын яамнаас өгсөн жагсаалтаа буулгах эсвэл зургийг нь оруулна. e-Mongolia-оос авах лавлагаануудыг олж, нэг ZIP багц болгон татна.</div>
+      <textarea id="list" maxlength="5000" placeholder="Жишээ:
+1. Иргэний үнэмлэхний хуулбар
+2. Нийгмийн даатгалын лавлагаа
+3. Ял шийтгэлгүй тодорхойлолт
+4. Цээж зураг 3x4"></textarea>
+      <label class="small muted">эсвэл зураг: <input type="file" id="img" accept="image/png, image/jpeg, image/webp"></label>
+      <button id="parse" class="primary" style="margin-top:10px">Жагсаалтыг шинжлэх</button>
+      <div id="listStatus" class="small muted" style="margin-top:8px"></div>
+      <div class="actions">
+        <button id="openEm2" class="ghost small">e-Mongolia нээх</button>
+        <button id="reset2" class="ghost small hidden">↺ Дахин эхлүүлэх</button>
+      </div>
+    </div>
+
+    <div id="listCard" class="card hidden"><div id="listPlan"></div></div>
+
+    <button id="forget" class="ghost small">Сонголтуудыг мартах, үйлчилгээний жагсаалт шинэчлэх</button>
+  </div>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>
